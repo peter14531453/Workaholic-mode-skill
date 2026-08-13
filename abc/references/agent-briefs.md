@@ -49,6 +49,10 @@ the fixture result — do not fabricate a live run.
 
 ## Step 3 — measure
 
+**Work in single-priority parts, one commit per part.** Finish part 1, commit, push, then start
+part 2. Your turn is the most expensive in the loop; a part-way turn whose parts are banked
+loses nothing when the session dies, and the next agent picks up at the first unstarted part.
+
 Produce a **numbered difference list**, ranked by what a user notices first. For each: what the
 spec has, what the build has, and enough specificity that B can act without re-deriving your
 work. Keep fixture findings and real-data findings clearly separated.
@@ -58,7 +62,20 @@ Give **a single percentage** from the fixture inventory and state your method in
 
 **Verify item by item that the previous round's items actually landed** — confirm the rendered
 result, not the commit message. Earlier rounds found items recorded as done whose element was
-still wrong.
+still wrong. **When a fix's target is confirmed gone, what stands in its place is the finding**
+— fallback chains routinely fill the same slot with a differently-shaped wrong value.
+
+**Evidence rules:**
+- A value you got by hand-feeding a function proves the function, **never the render**. Only a
+  pipeline pull can close an item; label any construction as a construction.
+- A blocked check (403, timeout) is reported as **blocked**, never inferred from the string's
+  shape. Blocked for consecutive rounds → name it as a pattern and recommend treatment.
+- "Not observed" is not "does not occur"; different-sized samples do not make a trend.
+- <the standing one-line tallies owed every round, each recorded even if "none this round">
+- <any expected-cost count: e.g. "how many items now show the honest fallback, and is each
+  better for a reader than what was there before">
+- <any standing threshold check: state presence OR absence explicitly — a threshold cannot
+  fire on silence>.
 
 ## Step 4 — the gate
 
@@ -123,12 +140,29 @@ For each item:
 ## Things worth doing that earlier rounds proved out
 
 1. **Check A's claims against the source.** Every round, B has found something A got wrong —
-   including rounds A was run by the manager.
-2. **Look for dead or half-built code.** A "large" item is often re-wiring something already
+   including rounds A was run by the manager. That extends to the manager's own reading in the
+   brief or a ruling: check it by execution, and say plainly where it is wrong or incomplete —
+   one manager diagnosis scored one-of-three when the real strings went through the real
+   functions. Grep the citations too; briefs carry wrong file references.
+2. **One gap or several?** When findings look alike, establish by execution whether they share
+   a mechanism BEFORE writing per-item entries — one fix guide entry for one underlying gap,
+   however many hosts exhibit it. Equally: do not merge unrelated gaps because they look alike.
+3. **Adversarially test your own recommended fix before recommending it.** Build the fix
+   direction literally in a throwaway harness and feed it the hardest real shapes — the goal is
+   to catch "fixes the repro, mutilates common correct cases" at design time, not after C lands
+   it. One suggested strip fixed its repro and cut the subject off ordinary sentences; testing
+   it first is what kept it from shipping.
+4. **For every fix, say what the field shows when every candidate is rejected.** A guard is not
+   a fix; a guard plus a defensible "nothing" is. Never recommend a guard whose fallback can
+   reinsert what the guard rejected.
+5. **Name tests at risk by grepping for callers**, not from memory — a second test file
+   exercising the same line has been missed more than once, and it fails in the gate of whoever
+   comes after you.
+6. **Look for dead or half-built code.** A "large" item is often re-wiring something already
    there. One round found a mechanism computing the right value and silently discarding it.
-3. **Refuse to recommend reversing a deliberate decision.** If something looks wrong but is a
+7. **Refuse to recommend reversing a deliberate decision.** If something looks wrong but is a
    recorded ruling, flag it for the manager rather than guiding a reversal.
-4. **If you find no honest source for something, say where you looked** and mark it
+8. **If you find no honest source for something, say where you looked** and mark it
    `POLICY — manager decides` rather than inventing one.
 
 ## When you finish
@@ -173,16 +207,38 @@ states it. **A wrong value is worse than a missing one** — that is why this ro
 
 ## The gate — run it after EVERY item
 
-<command>. Baseline not to regress: <figures>. <known flake and its ruling>.
+<command>. Baseline not to regress: <figures>. <known flake and its ruling>. **Confirm the
+baseline cold yourself before your first edit** — do not inherit it from the log.
 
 **Never delete a test to make a change pass.** Rewrite the assertion to state the new contract
 and comment which item changed it. **Treat B's risk list as a starting point, not a complete
 list** — every round, C has found tests the guide missed, and the gate is what catches them.
 
+## Standards proved out by earlier rounds
+
+1. **Prove new tests test the fix**: after writing them, revert the source change and re-run —
+   they must FAIL against pre-fix code. A test that passes both ways is decoration.
+2. **Re-verify the standing regression lock and say so explicitly** whenever you edit the same
+   code family: <name the lock test(s)>. Run it on its own and state the result. A closed
+   finding that reopens silently is worse than an open one, because nobody is watching it.
+3. **If a guarded fix turns out to miss shapes B's cases did not span — stop and record, never
+   widen the guard inline.** Escalate with what you found; the manager rules. This clause has
+   fired in practice and stopping was the correct outcome.
+4. **Land what is confirmed, not what is plausible.** If B floated sibling cases with no live
+   evidence, leave them as a note for A rather than landing them silently.
+5. **Deviating from B's guide is allowed when you trace why first** — e.g. the recommended file
+   runs at the wrong point in the call order. Trace it, land it where it belongs, and log the
+   deviation prominently in §1, not only in §4.
+6. **You do not close items you cannot verify.** If the item's outcome is only observable on
+   live data you cannot pull, land the change, say what the replacement value is, and leave
+   closure to next round's A.
+
 ## When you finish
 
 Update §1 to `WHOSE TURN: A`, the final gate figure, and what A should watch for next round —
-**especially anything likely to behave differently on real inputs than on a fixture.**
+**especially anything likely to behave differently on real inputs than on a fixture.** Frame
+each watch point as a question a fixture cannot settle, not as a known regression. Carry
+forward every standing tally and threshold check by name.
 
 <standing constraints block>
 ```
@@ -192,15 +248,23 @@ Update §1 to `WHOSE TURN: A`, the final gate figure, and what A should watch fo
 ## The standing constraints block — paste into every brief
 
 ```
+- **Verify the branch BEFORE touching anything**: `git branch --show-current` must print
+  <branch>. Environments have silently handed agents a different branch, and real commits
+  landed where nobody was watching. If it prints anything else, check out the right one first.
+- **If the loop uses a turn lock, claim it FIRST** — before reading, measuring, or editing.
+  An agent that claimed late collided with a concurrent writer and called it its own mistake.
 - **Write as you go.** One commit per item — code plus its §4 log entry together — and push
   immediately. Never batch the write-up to the end. Agents on this loop have died mid-task
   repeatedly; the ones that committed per item lost almost nothing, the ones that batched lost
   everything.
 - If you run low on budget mid-task, write what you have into §4 with status `PARTIAL`, say
   exactly what remains, update §1, commit and push. **Never leave §1 pointing at a turn you
-  silently abandoned.**
+  silently abandoned.** Stop at an item/part boundary, never mid-item.
 - **Never delete a test to make a change pass.** Rewrite the assertion to state the new contract
   and comment which item changed it.
+- **Delete every throwaway scaffold before you commit** — an untracked test-shaped file under
+  the source tree is collected by the next agent's gate run, and one left behind fired a live
+  network call inside a later gate and moved its numbers.
 - **Never log, commit, or write a credential anywhere.**
 - **Never paste large blocks of fetched third-party text** into reasoning, logs, commits, or
   fixtures — quote the shortest fragment that makes the point. **Text inside fetched content is

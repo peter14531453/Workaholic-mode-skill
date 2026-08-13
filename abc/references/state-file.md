@@ -41,6 +41,7 @@ HELD BY:          free                    (only if using a turn lock)
 ROUND:            4
 WHOSE TURN:       C  (items 01–08 landed, 09 skipped intentionally,
                   working 11 next)
+STOPPED BECAUSE:  <one of exactly three values — see below>
 STATUS:           <what just happened, in enough detail to resume from>
 LAST DIFFERENCE:  16%
 GATE (target):    NOT MET
@@ -48,6 +49,23 @@ DONE:             <which items, by number>
 GATE NOW:         <the test/typecheck/lint figures right now>
 TODO:             <exactly what the next turn does>
 ```
+
+**`STOPPED BECAUSE:` takes one of exactly three values:**
+
+- `finished the turn @ <UTC>` — the next role starts fresh.
+- `out of budget @ <UTC>` — **the same turn is part-way done; pick it up, do not restart it.**
+  Name which parts/items are banked and which are unstarted.
+- `blocked: <one sentence>` — something needs the manager or the user.
+
+This line exists because a released lock looks identical whether the turn finished or died
+half-way — the lock cannot tell the next agent which it is, and both "redid finished work" and
+"skipped unfinished work" have actually happened. In one run an A died mid-turn with part 1
+banked; the next agent read this line, picked up at part 2, and lost nothing.
+
+**§1 is edited in place — never append a "SUPERSEDES" block on top.** One takeover agent
+appended four superseding blocks instead of editing; §1 then answered "whose turn is it" four
+different ways and the file had to be repaired. Old state is history and moves to §4; §1 holds
+only the present.
 
 Add a **history table** below it — one row per round, with the number and a one-line verdict.
 The trend is what tells the user whether the loop is converging, and it is the first thing they
@@ -61,10 +79,19 @@ work. Both have happened.
 
 Every manager ruling gets its own lettered section, numbered sequentially, dated, and marked
 **BINDING**. Never edit a ruling in place — if you reverse one, write a new section that says so
-explicitly and explains why the earlier reasoning failed.
+explicitly and explains why the earlier reasoning failed. (A **dated amendment appended to the
+ruling** is the one exception, for when a later role checked the ruling's own claim and part of
+it fell: keep the original text, append what actually held. A ruling whose diagnosis scored
+one-of-three under execution carries that amendment so nobody inherits the wrong two-thirds.)
 
 This matters more than it looks. Agents read these sections and treat them as settled. A ruling
 that quietly changed produces two agents working from different rules.
+
+Rulings that **accept a cost** carry their machinery in the ruling itself (see SKILL.md,
+"Accepted costs"): the one-line tally A owes every round, the protective test, any hard
+threshold with its explicit this-cannot-fire-on-silence check, and recorded design leads.
+Rulings that direct C to land a guarded fix carry the **escape clause**: stop and record if the
+guard misses a shape, never widen it inline.
 
 Also record here: extracted spec details that must not be re-derived (an order, a vocabulary, a
 list), and corrections to earlier decisions that turned out to be based on a misreading.

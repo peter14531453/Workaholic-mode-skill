@@ -22,6 +22,19 @@ A self-paced timer in the running session that re-reads §1 and continues whoeve
 **Cadence: 20–30 minutes.** Tighter is pure waste — a failed spawn tells you nothing a later one
 won't, and each idle tick costs tokens.
 
+**Never slow the cadence because of what a limit error says.** Error wording is not reliable
+evidence about the account: one spawn died citing a "monthly spend limit" while the user's
+actual usage panel read 12% and 17%, and a retry hours later ran normally — the 12-hour
+slowdown chosen on that wording cost most of a working day. A failed spawn is a quiet no-op for
+that tick; the next tick is the retry. Escalate to the user, quoting the error verbatim, only
+after several consecutive identical failures — and if the user says there is credit left,
+believe them: they can see the usage panel and you cannot.
+
+**Every tick checks, in order:** the branch, then the turn lock (someone actively working →
+exit quietly), then whether a background agent from this session is still running (never spawn
+a duplicate), and only then resumes — picking up a `STOPPED BECAUSE: out of budget` turn at its
+first unstarted part rather than restarting it.
+
 **What it gives you:** the local environment. Credentials, local services, the real checkout,
 the machine's own tooling. If any turn needs those, this is the only mechanism that can run it.
 
@@ -65,6 +78,16 @@ durable instructions belong in the repo anyway. Point it at the state file:
    This matters more than it sounds. A cloud run that produces a fixture-only measurement and
    calls it the round hides exactly the failure the real-data pass exists to catch.
 
+   **The capability split is per turn type, not per environment.** In practice a cloud run
+   completed an entire implementer turn — three fix items, tests, per-item commits — because
+   C's work needs no credentials; only the real-data measurement does. Let the cloud take
+   whatever turns it genuinely can, and decline only the ones it can't.
+
+   One reconciliation to record when both environments run the gate: a credential-gated test
+   may SKIP in the cloud and RUN-and-flake locally. Same totals, different-looking summary
+   lines — write the reconciliation into the log once, or a later reader will chase a phantom
+   regression between the two.
+
 2. **A quiet no-op is the correct outcome most of the time.** It fires on a schedule; most
    firings have nothing to do. Say so, or it will invent work to justify the run.
 
@@ -99,9 +122,48 @@ Put a `HELD BY:` line at the top of §1 and a §0d explaining it. To claim:
 **Step 4 is the actual lock.** Git refuses a non-fast-forward push, so exactly one writer can
 win. Everything above it is bookkeeping.
 
+**Claim it before you read, measure, or edit anything else** — an agent that oriented first and
+claimed late collided with a concurrent writer, and called that ordering its own mistake.
+
 **Release it** — set `HELD BY: free`, commit, push — as part of your final commit. And make it
 **stale after ~2 hours**, because an agent that dies mid-task will not release it, and a lock
 that cannot expire turns one crash into a permanently jammed loop.
+
+### The lock also delivers late-breaking rulings — a worked example
+
+A cloud writer claimed a turn while the manager was still writing a ruling that governed it.
+The manager's push was rejected (the writer had won the race), so the manager **rebased the
+ruling on top of the writer's claim, pushed, and stood down** rather than taking the turn back.
+The cloud writer had pulled *before* the ruling existed — but its own first per-item push was
+then rejected for the same reason, forcing a pull that delivered the ruling mid-turn. Its log
+records the ruling arriving "via the rebase."
+
+Nobody coordinated that; the rejected push did. Two rules fall out:
+
+- **A manager may push rulings mid-turn without taking the lock** — rebase onto the holder's
+  head; the holder's next push-reject will hand the ruling over.
+- **Losing the race to a legitimate writer means standing down, not reclaiming** — the work
+  continues; deliver your input by commit instead.
+
+### A third writer: a different AI on the same machine
+
+If the loop must survive one vendor's credit limits, a second local agent (a different vendor's
+CLI or chat) can be a writer too — it has the same filesystem and credentials, so it can run
+every turn type. Three things make it safe:
+
+- **An entry-door document in the repo** that orients a non-native agent — setup, reading
+  order, how to run the roles sequentially in one conversation, how to stop clean. It must
+  **restate no rules**: it points into the state file for every actual rule, because two copies
+  of a rule become two different rules.
+- **The user is the router.** No agent hands off to another agent; you stop clean (per §1), and
+  the user pastes a kickoff prompt into whichever agent has budget. Manual at the switch,
+  automatic everywhere else.
+- **Sequential roles in one conversation are legitimate for progress** — each role's output is
+  committed before the next role starts, so "a separate agent" and "the same agent wearing a
+  different hat after a commit" are equivalent to the loop. **But a gate closed by one writer
+  that ran every role that round is provisional**: in practice such a close was reopened and an
+  independent A then found real differences. Someone who did not do the work must re-measure
+  before the loop ends.
 
 ---
 

@@ -70,8 +70,12 @@ next role finds something the previous one got wrong, including the manager. Adv
 ## §1. CURRENT STATE — THE SOURCE OF TRUTH
 
 ```
+HELD BY:          free          (only if using a turn lock — claim before working)
 ROUND:            1
 WHOSE TURN:       A
+STOPPED BECAUSE:  —             (always one of: finished the turn @ <UTC> /
+                                 out of budget @ <UTC>, parts X done Y unstarted /
+                                 blocked: <one sentence>)
 STATUS:           NOT STARTED
 LAST DIFFERENCE:  —
 GATE (<target>):  NOT MET
@@ -80,6 +84,10 @@ DONE:      —
 GATE NOW:  <tests / typecheck / lint baseline>
 TODO:      A measures round 1.
 ```
+
+**This block is edited in place — never append a superseding copy below it.** `STOPPED
+BECAUSE:` is what tells the next agent whether to start the next turn or pick this one up
+part-way; a released lock looks identical in both cases.
 
 **History of measured difference, newest last:**
 
