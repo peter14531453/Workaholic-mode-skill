@@ -48,6 +48,23 @@ It carries the parts that are only obvious after they bite you:
 
 ---
 
+## workaholic-mode — the four-part working mode in one phrase
+
+Say **"开启workaholic mode"** (or "workaholic mode", "turn on workaholic mode") and the agent turns on four things together:
+
+1. **Reviewing cycle** — scored rounds against your target percentage, blind readers, every fix verified by the manager with its own mutation; it stops only when every theme reaches the target in two consecutive rounds ([peter14531453/reviewing-cycle](https://github.com/peter14531453/reviewing-cycle)).
+2. **Subagent group** — A reviewer, B investigator, C implementer and blind readers, each in its own worktree; the manager rules and lands (`abc/` in this repo).
+3. **Hourly clock** — a cheap scheduled check that wakes the manager when the work stalls (`workaholic-mode/references/hourly-clock.md`).
+4. **Everyone at once** — every item that can start, starts now, in parallel; a free slot is refilled the moment a worker reports.
+
+The target percentage is the one thing it asks for if you did not give it. `workaholic-mode/SKILL.md` is self-sufficient; install `abc` and `reviewing-cycle` too for the full templates.
+
+### 中文说明
+
+说一句 **“开启workaholic mode”**，就同时打开四件事：review cycling（按目标分数逐轮打分，连续两轮达标才停）、subagent 小组（A 评审 / B 调查 / C 实现 / 盲评员，经理裁决并亲自验证）、每小时时钟（工作停了就自动叫醒经理）、所有能开工的 agent 同时开工（谁先完成就立刻补上下一件）。没给目标分数时，它只问这一个问题。
+
+---
+
 ## Installing
 
 ### Claude Code / Claude Desktop
@@ -55,12 +72,16 @@ It carries the parts that are only obvious after they bite you:
 Copy the skill folder into your personal skills directory:
 
 ```bash
-cp -r abc ~/.claude/skills/
+cp -r abc workaholic-mode ~/.claude/skills/
 ```
 
-It becomes available as `/abc`, and triggers on its own when a task matches its description.
+They become available as `/abc` and `/workaholic-mode`, and triggers on its own when a task matches its description.
 
 Project-scoped instead of personal: copy it to `.claude/skills/` inside the repo.
+
+### claude.ai (every new chat, and Claude Code on the web)
+
+Zip a skill folder (for example `workaholic-mode/`, with `SKILL.md` at the top of the folder) and upload it under Settings → Capabilities → Skills. An uploaded skill is synced into every new conversation of your account, so the trigger phrase works without installing anything per project.
 
 ### Other agents (ChatGPT, Codex, Cursor, or any agent that reads files)
 
